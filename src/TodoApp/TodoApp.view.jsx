@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { forwardTo } from 'reelm';
 
 import TodoItem from './TodoItem.view';
+import TodoItemEditor from './TodoItemEditor.view';
 import TodoFooter from './TodoFooter.view';
 
 const ENTER_KEY = 13;
@@ -16,13 +17,18 @@ const TodoFilter = {
 function TodoApp({ todos,
     newTodoText, activeTodoCount,
     completedTodoCount, currentTodoFilter,
-    dispatch }) {
+    dispatch, currentEditingItem, currentEditingIndex }) {
+
     const onNewTodoChange = text => dispatch({
         type: 'NewTodo.Change',
         text: text });
     const onCreateTodo = text => dispatch({
         type: 'CreateTodo',
         text: text });
+
+    const onToggleAll = () => dispatch({
+        type: 'ToggleAll',
+    });
 
     return (
         <div>
@@ -42,17 +48,26 @@ function TodoApp({ todos,
                 <input
                   className='toggle-all'
                   type='checkbox'
-                  checked />
+                  onChange={onToggleAll}
+                  checked={activeTodoCount === 0} />
                 <ul className='todo-list'>
-                    {todos.map((todo, index) => (
-                        (<TodoItem
-                          key={index}
-                          todo={todo}
-                          dispatch={forwardTo(dispatch, 'TodoItems', index)}
-                          editing={false}/>)))}
+                    {todos.map((todo, index) =>
+                        currentEditingIndex === index
+                            ? (<TodoItemEditor
+                                  key={index}
+                                  todo={currentEditingItem}
+                                  dispatch={forwardTo(dispatch, 'CurrentEditingItem')}
+                                  />)
+                            : (<TodoItem
+                                  key={index}
+                                  todo={todo}
+                                  dispatch={forwardTo(dispatch, 'TodoItems', index)}
+                                  />)
+                            )}
                 </ul>
             </section>
             <TodoFooter
+              dispatch={dispatch}
               activeCount={activeTodoCount}
               completedCount={completedTodoCount}
               filter={currentTodoFilter} />
@@ -67,13 +82,28 @@ function onKey(keyMap) {
     };
 }
 
+function filterWith(todos, filter) {
+    if (filter === 'All') {
+        return todos;
+    }
+    if (filter === 'Active') {
+        return todos.filter(x => !x.completed);
+    }
+    if (filter === 'Completed') {
+        return todos.filter(x => x.completed);
+    }
+    return [];
+}
+
 function TodoAppSelector(state) {
     return ({
-        todos: state.get('todoItems').toJS(),
+        todos: filterWith(state.get('todoItems').toJS(), state.get('filter')),
         activeTodoCount: state.get('todoItems').toJS().filter(x => !x.completed).length,
         completedTodoCount: state.get('todoItems').toJS().filter(x => x.completed).length,
-        currentTodoFilter: TodoFilter.All,
+        currentTodoFilter: state.get('filter'),
         newTodoText: state.get('newTodoText'),
+        currentEditingItem: state.get('currentEditingItem') && state.get('currentEditingItem').toJS(),
+        currentEditingIndex: state.get('currentEditingIndex'),
     });
 }
 
