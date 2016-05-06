@@ -15,10 +15,6 @@ const store = createStore(todoAppReducer, compose(
     reelmRunner(),
     window.devToolsExtension ? window.devToolsExtension() : f => f));
 
-const todos = [
-    { completed: false, title: 'todo 1', id: 1 },
-];
-
 ReactDom.render(
     <Provider store={store}>
         <TodoApp todos={todos}/>

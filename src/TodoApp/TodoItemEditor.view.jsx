@@ -22,7 +22,7 @@ export default function TodoItemEditor({ todo, dispatch }) {
                   checked={todo.completed} />
             </div>
             <input
-              autoFocus={true}
+              autoFocus
               className='edit'
               value={todo.title}
               onBlur={onSubmitEdit}
